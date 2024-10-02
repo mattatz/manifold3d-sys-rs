@@ -1,0 +1,15 @@
+[package]
+name = "manifold-sys"
+description = "Raw FFI bindings for Manifold's C API"
+homepage = "https://github.com/NickUfer/manifold-sys"
+license = "Apache-2.0"
+version = "0.0.2"
+edition = "2021"
+
+[dependencies]
+regex = "1.11.0"
+
+[build-dependencies]
+cc = "1.1.24"
+bindgen = "0.70.1"
+regex = "1.11.0"

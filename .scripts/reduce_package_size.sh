@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+rm -rf "$SCRIPT_DIR/../vendor/assimp/test"
+rm -rf "$SCRIPT_DIR/../vendor/assimp/contrib"
+rm -rf "$SCRIPT_DIR/../vendor/assimp/scripts"
+rm -rf "$SCRIPT_DIR/../vendor/assimp/tools"
+rm -rf "$SCRIPT_DIR/../vendor/assimp/port"
+rm -rf "$SCRIPT_DIR/../vendor/assimp/doc"
+rm -rf "$SCRIPT_DIR/../vendor/assimp/samples"
+rm -rf "$SCRIPT_DIR/../vendor/manifold/samples"
+rm -rf "$SCRIPT_DIR/../vendor/manifold/test"
+rm -rf "$SCRIPT_DIR/../vendor/manifold/docs"
+rm -rf "$SCRIPT_DIR/../vendor/manifold/extras"
+rm -rf "$SCRIPT_DIR/../vendor/manifold/bindings/wasm"
+rm -rf "$SCRIPT_DIR/../vendor/manifold/bindings/python"
+rm -rf "$SCRIPT_DIR/../vendor/glm/doc"
+rm -rf "$SCRIPT_DIR/../vendor/glm/test"
+rm -rf "$SCRIPT_DIR/../vendor/Clipper2/CSharp"
+rm -rf "$SCRIPT_DIR/../vendor/Clipper2/Tests"
+rm -rf "$SCRIPT_DIR/../vendor/Clipper2/Delphi"
+rm -rf "$SCRIPT_DIR/../vendor/Clipper2/DLL"
