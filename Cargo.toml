@@ -15,5 +15,5 @@ bindgen = "0.70"
 regex = "1.11"
 
 [features]
-full = ["export"]
 export = []
+parallel = []

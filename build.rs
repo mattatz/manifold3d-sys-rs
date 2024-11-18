@@ -5,6 +5,10 @@ fn feat_export() -> bool {
     cfg!(feature = "export")
 }
 
+fn feat_parallel() -> bool {
+    cfg!(feature = "parallel")
+}
+
 fn main() {
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
 
@@ -29,9 +33,16 @@ fn main() {
         .cpp(true)
         .include("vendor/manifold/include")
         .include("vendor/Clipper2/CPP/Clipper2Lib/include")
-        .include("vendor/glm")
         .include("vendor/manifold/bindings/c/include");
 
+    if feat_parallel() {
+        cc_build
+            .include("vendor/oneTBB/include")
+            .define("MANIFOLD_PAR", "1");
+    } else {
+        cc_build.define("MANIFOLD_PAR", "-1");
+    }
+    
     cc_build
         .flag_if_supported("-std:c++17") // MSVC
         .flag_if_supported("-std=c++17")

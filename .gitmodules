@@ -1,12 +1,12 @@
 [submodule "vendor/manifold"]
 	path = vendor/manifold
 	url = https://github.com/elalish/manifold.git
-[submodule "vendor/glm"]
-	path = vendor/glm
-	url = https://github.com/g-truc/glm.git
 [submodule "vendor/Clipper2"]
 	path = vendor/Clipper2
 	url = https://github.com/AngusJohnson/Clipper2.git
 [submodule "vendor/assimp"]
 	path = vendor/assimp
 	url = https://github.com/assimp/assimp.git
+[submodule "vendor/oneTBB"]
+	path = vendor/oneTBB
+	url = https://github.com/oneapi-src/oneTBB.git
