@@ -1,7 +1,7 @@
 [package]
-name = "manifold-sys"
+name = "manifold3d-sys"
 description = "Raw FFI bindings for Manifold's C API"
-homepage = "https://github.com/NickUfer/manifold-sys-rs"
+homepage = "https://github.com/NickUfer/manifold3d-sys-rs"
 license = "Apache-2.0"
 version = "0.0.2"
 edition = "2021"
