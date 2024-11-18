@@ -6,6 +6,22 @@ license = "Apache-2.0"
 version = "0.0.2"
 edition = "2021"
 
+include = [
+    "/src",
+    "/vendor/assimp/include",
+    "/vendor/Clipper2/CPP/Clipper2Lib",
+    "/vendor/Clipper2/CPP/Clipper2Lib/src",
+    "/vendor/Clipper2/CPP/Utils",
+    "/vendor/manifold/include",
+    "/vendor/manifold/bindings/c",
+    "/vendor/manifold/src",
+    "/vendor/oneTBB/include",
+    "/build.rs",
+    "/Cargo.toml",
+    "/LICENSE",
+    "/README.md"
+]
+
 [dependencies]
 regex = "1.11"
 
