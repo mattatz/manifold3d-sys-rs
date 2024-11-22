@@ -12,25 +12,12 @@ fn feat_parallel() -> bool {
 fn main() {
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
 
-    cc::Build::new()
-        .cpp(true)
-        .include("vendor/Clipper2/CPP/Clipper2Lib/include")
-        .include("vendor/Clipper2/CPP/Utils")
-        .files([
-            "vendor/Clipper2/CPP/Clipper2Lib/src/clipper.engine.cpp",
-            "vendor/Clipper2/CPP/Clipper2Lib/src/clipper.offset.cpp",
-            "vendor/Clipper2/CPP/Clipper2Lib/src/clipper.rectclip.cpp",
-            "vendor/Clipper2/CPP/Utils/clipper.svg.cpp",
-        ])
-        .flag_if_supported("-std:c++17") // MSVC
-        .flag_if_supported("-std=c++17")
-        .compile("clipper2");
-
-    println!("cargo:rustc-link-lib=clipper2");
+    compile_and_link_clipper2();
 
     let mut cc_build = cc::Build::new();
     cc_build
         .cpp(true)
+        .warnings(false)
         .include("vendor/manifold/include")
         .include("vendor/Clipper2/CPP/Clipper2Lib/include")
         .include("vendor/manifold/bindings/c/include");
@@ -42,14 +29,11 @@ fn main() {
     } else {
         cc_build.define("MANIFOLD_PAR", "-1");
     }
-    
+
     cc_build
+        .warnings(false)
         .flag_if_supported("-std:c++17") // MSVC
-        .flag_if_supported("-std=c++17")
-        .flag_if_supported("-Wno-unused-parameter")
-        .flag_if_supported("-Wno-extra")
-        .flag_if_supported("-Wno-unused-variable")
-        .flag_if_supported("-Wno-unused-but-set-variable");
+        .flag_if_supported("-std=c++17");
 
     let mut cc_build_files = vec![
         "vendor/manifold/src/boolean3.cpp",
@@ -91,35 +75,65 @@ fn main() {
         // Put file in {OUT_DIR}/assimp_include/assimp/config.h
         std::fs::write(assimp_include_assimp_folder.join("config.h"), assimp_config)
             .expect("could not write assimp config.h!");
-        
+
         cc_build_files.push("vendor/manifold/src/meshIO/meshIO.cpp");
         cc_build
             .include(assimp_include_folder)
             .define("MANIFOLD_EXPORT", "ON")
             .include("vendor/assimp/include");
     }
-    
-    cc_build
-        .files(cc_build_files)
-        .compile("manifold");
+
+    cc_build.files(cc_build_files).compile("manifold");
 
     println!("cargo:rustc-link-lib=manifold");
 
+    let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
     let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
     let target_env = env::var("CARGO_CFG_TARGET_ENV").unwrap();
 
-    match (target_os.as_str(), target_env.as_str()) {
-        ("linux", _) | ("windows", "gnu") | ("android", _) => {
+    match (
+        target_arch.as_str(),
+        target_os.as_str(),
+        target_env.as_str(),
+    ) {
+        (_, "linux", _) | (_, "windows", "gnu") | (_, "android", _) => {
             println!("cargo:rustc-link-lib=dylib=stdc++")
         }
-        ("macos", _) | ("ios", _) => println!("cargo:rustc-link-lib=dylib=c++"),
-        ("windows", "msvc") => {}
+        (_, "macos", _) | (_, "ios", _) => println!("cargo:rustc-link-lib=dylib=c++"),
+        (_, "windows", "msvc") => {}
+        ("wasm32", "emscripten", _) => {
+            println!("cargo:rustc-link-arg=--no-entry");
+        }
         _ => unimplemented!(
             "target_os: {}, target_env: {}",
             target_os.as_str(),
             target_env.as_str()
         ),
     }
+
+    generate_bindings(&out_dir)
+}
+
+fn compile_and_link_clipper2() {
+    cc::Build::new()
+        .cpp(true)
+        .include("vendor/Clipper2/CPP/Clipper2Lib/include")
+        .include("vendor/Clipper2/CPP/Utils")
+        .files([
+            "vendor/Clipper2/CPP/Clipper2Lib/src/clipper.engine.cpp",
+            "vendor/Clipper2/CPP/Clipper2Lib/src/clipper.offset.cpp",
+            "vendor/Clipper2/CPP/Clipper2Lib/src/clipper.rectclip.cpp",
+            "vendor/Clipper2/CPP/Utils/clipper.svg.cpp",
+        ])
+        .flag_if_supported("-std:c++17") // MSVC
+        .flag_if_supported("-std=c++17")
+        .compile("clipper2");
+    println!("cargo:rustc-link-lib=clipper2");
+}
+
+fn generate_bindings(out_dir: &PathBuf) {
+    let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
+    let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
 
     let mut bindings_builder = bindgen::Builder::default()
         .header("vendor/manifold/bindings/c/include/manifold/manifoldc.h")
@@ -129,13 +143,18 @@ fn main() {
         bindings_builder = bindings_builder.clang_arg("-DMANIFOLD_EXPORT");
     }
 
-    let bindings = bindings_builder
-        .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
-        .merge_extern_blocks(true)
-        .generate()
-        .expect("Unable to generate bindings");
+    let mut bindings_builder =
+        bindings_builder.parse_callbacks(Box::new(bindgen::CargoCallbacks::new()));
 
-    bindings
+    if target_arch == "wasm32" && target_os == "emscripten" {
+        // Workaround for bug:
+        // https://github.com/rust-lang/rust-bindgen/issues/751
+        bindings_builder = bindings_builder.clang_arg("-fvisibility=default");
+    }
+
+    bindings_builder
+        .generate()
+        .expect("Unable to generate bindings")
         .write_to_file(out_dir.join("bindings.rs"))
         .expect("Couldn't write bindings!");
 }

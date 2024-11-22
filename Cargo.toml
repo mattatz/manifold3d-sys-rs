@@ -22,6 +22,9 @@ include = [
     "/README.md"
 ]
 
+[lib]
+crate-type = ["cdylib", "rlib"]
+
 [dependencies]
 regex = "1.11"
 
