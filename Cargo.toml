@@ -8,14 +8,12 @@ edition = "2021"
 
 include = [
     "/src",
-    "/vendor/assimp/include",
-    "/vendor/Clipper2/CPP/Clipper2Lib",
-    "/vendor/Clipper2/CPP/Clipper2Lib/src",
-    "/vendor/Clipper2/CPP/Utils",
+    "/vendor/manifold/cmake",
     "/vendor/manifold/include",
     "/vendor/manifold/bindings/c",
+    "/vendor/manifold/bindings/CMakeLists.txt",
     "/vendor/manifold/src",
-    "/vendor/oneTBB/include",
+    "/vendor/manifold/CMakeLists.txt",
     "/build.rs",
     "/Cargo.toml",
     "/LICENSE",
@@ -23,16 +21,13 @@ include = [
 ]
 
 [lib]
-crate-type = ["cdylib", "rlib"]
-
-[dependencies]
-regex = "1.11"
+crate-type = ["lib"]
 
 [build-dependencies]
-cc = "1.2"
+cmake = "0.1"
 bindgen = "0.70"
-regex = "1.11"
 
 [features]
 export = []
 parallel = []
+static = []
