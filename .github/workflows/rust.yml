@@ -10,14 +10,73 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  build_linux:
+    name: 'Build Linux - Features: ${{matrix.features}}'
+    timeout-minutes: 10
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        features:
+          - ''
+          - 'export'
+          - 'parallel'
+          - 'export,parallel'
+          - 'static'
+          - 'export,static'
+          - 'parallel,static'
+          - 'export,parallel,static'
     steps:
-    - uses: actions/checkout@v4
-      with:
-        submodules: true
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y --no-install-recommends libclipper2 libassimp-dev libtbb-dev
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build
+        run: cargo build --verbose
+      - name: Run tests
+        run: cargo test --features '${{matrix.features}}' --verbose
+  build_windows:
+    name: 'Build Windows - Features: ${{matrix.features}}'
+    timeout-minutes: 10
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        features:
+          - ''
+          - 'export'
+          - 'parallel'
+          - 'export,parallel'
+          - 'static'
+          - 'export,static'
+          - 'parallel,static'
+          - 'export,parallel,static'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: jwlawson/actions-setup-cmake@v2
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build
+        run: cargo build --verbose
+      - name: Run tests
+        run: cargo test --features '${{matrix.features}}' --verbose
+#  build_macos:
+#    timeout-minutes: 10
+#    runs-on: macos-latest
+#    strategy:
+#      matrix:
+#        # TODO
+#        # Cannot test parallel due to missing symbols during execution
+#        features: [ 'export static', 'static', 'export', '' ]
+#    steps:
+#      - uses: actions/checkout@v4
+#        with:
+#          submodules: true
+#      - uses: dtolnay/rust-toolchain@stable
+#      - name: Build
+#        run: cargo build --verbose
+#      - name: Run tests
+#        run: cargo test --features '${{matrix.features}}' --verbose
