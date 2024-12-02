@@ -35,7 +35,7 @@ jobs:
           sudo apt install -y --no-install-recommends libclipper2 libassimp-dev libtbb-dev
       - uses: dtolnay/rust-toolchain@stable
       - name: Build
-        run: cargo build --verbose
+        run: cargo build --features '${{matrix.features}}' --verbose
       - name: Run tests
         run: cargo test --features '${{matrix.features}}' --verbose
   build_windows:
@@ -46,9 +46,6 @@ jobs:
       matrix:
         features:
           - 'static'
-          - 'export,static'
-          - 'parallel,static'
-          - 'export,parallel,static'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -56,7 +53,7 @@ jobs:
       - uses: jwlawson/actions-setup-cmake@v2
       - uses: dtolnay/rust-toolchain@stable
       - name: Build
-        run: cargo build --verbose
+        run: cargo build --features '${{matrix.features}}' --verbose
       - name: Run tests
         run: cargo test --features '${{matrix.features}}' --verbose
 #  build_macos:

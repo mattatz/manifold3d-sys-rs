@@ -16,14 +16,26 @@ fn feature_static() -> bool {
 fn main() {
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
 
-    let dst = cmake::Config::new("vendor/manifold")
+    let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
+    let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
+    let target_env = env::var("CARGO_CFG_TARGET_ENV").unwrap();
+
+    let mut cmake_config = cmake::Config::new("vendor/manifold");
+
+    cmake_config
         .define("BUILD_SHARED_LIBS", if feature_static() { "OFF" } else { "ON" } )
+        .define("MANIFOLD_TEST", "OFF")
         .define("MANIFOLD_CBIND", "ON")
         .define("MANIFOLD_CROSS_SECTION", "ON")
         .define("MANIFOLD_PAR", if feature_parallel() { "ON" } else { "OFF" })
         .define("MANIFOLD_EXPORT", if feature_export() { "ON" } else { "OFF" })
-        .out_dir(out_dir.clone())
-        .build();
+        .out_dir(out_dir.clone());
+
+    if target_os == "windows" {
+        cmake_config.cxxflag("/EHsc");
+    }
+
+    let dst = cmake_config.build();
 
     if feature_export() {
         println!("cargo:rustc-link-lib=assimp");
@@ -35,10 +47,6 @@ fn main() {
     println!("cargo:rustc-link-search=native={}/lib", dst.display());
     println!("cargo:rustc-link-lib={}=manifold", if feature_static() { "static" } else { "dylib" });
     println!("cargo:rustc-link-lib={}=manifoldc", if feature_static() { "static" } else { "dylib" });
-
-    let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
-    let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
-    let target_env = env::var("CARGO_CFG_TARGET_ENV").unwrap();
 
     match (
         target_arch.as_str(),
