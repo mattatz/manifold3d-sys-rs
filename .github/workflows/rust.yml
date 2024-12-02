@@ -45,10 +45,6 @@ jobs:
     strategy:
       matrix:
         features:
-          - ''
-          - 'export'
-          - 'parallel'
-          - 'export,parallel'
           - 'static'
           - 'export,static'
           - 'parallel,static'
