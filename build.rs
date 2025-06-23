@@ -44,7 +44,12 @@ fn main() {
         println!("cargo:rustc-link-lib=tbb");
     }
 
-    println!("cargo:rustc-link-search=native={}/lib", dst.display());
+    for dir in ["lib", "lib64"] {
+        let path = dst.join(dir);
+        if path.exists() {
+            println!("cargo:rustc-link-search=native={}", path.display());
+        }
+    }
     println!("cargo:rustc-link-lib={}=manifold", if feature_static() { "static" } else { "dylib" });
     println!("cargo:rustc-link-lib={}=manifoldc", if feature_static() { "static" } else { "dylib" });
 
