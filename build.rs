@@ -84,7 +84,6 @@ fn main() {
     let link_kind = if feature_static() { "static" } else { "dylib" };
     println!("cargo:rustc-link-lib={}=manifold", link_kind);
     println!("cargo:rustc-link-lib={}=manifoldc", link_kind);
-    println!("cargo:rustc-link-lib={}=Clipper2", link_kind);
 
     match (
         target_arch.as_str(),
