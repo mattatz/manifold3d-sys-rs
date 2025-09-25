@@ -43,6 +43,7 @@ fn main() {
     }
 
     cmake_config
+        .define("MANIFOLD_USE_BUILTIN_CLIPPER2", "ON") // Use builtin version of clipper2
         .define(
             "BUILD_SHARED_LIBS",
             if feature_static() { "OFF" } else { "ON" },
@@ -79,14 +80,11 @@ fn main() {
             println!("cargo:rustc-link-search=native={}", path.display());
         }
     }
-    println!(
-        "cargo:rustc-link-lib={}=manifold",
-        if feature_static() { "static" } else { "dylib" }
-    );
-    println!(
-        "cargo:rustc-link-lib={}=manifoldc",
-        if feature_static() { "static" } else { "dylib" }
-    );
+
+    let link_kind = if feature_static() { "static" } else { "dylib" };
+    println!("cargo:rustc-link-lib={}=manifold", link_kind);
+    println!("cargo:rustc-link-lib={}=manifoldc", link_kind);
+    println!("cargo:rustc-link-lib={}=Clipper2", link_kind);
 
     match (
         target_arch.as_str(),
