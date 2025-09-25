@@ -19,16 +19,45 @@ fn main() {
     let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
     let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
     let target_env = env::var("CARGO_CFG_TARGET_ENV").unwrap();
+    let profile = env::var("PROFILE").unwrap_or_else(|_| "release".to_string());
 
     let mut cmake_config = cmake::Config::new("vendor/manifold");
 
+    // Setup CMake configuration for MSVC
+    cmake_config.profile(if profile.eq_ignore_ascii_case("release") {
+        "Release"
+    } else {
+        "Debug"
+    });
+    cmake_config.define("CMAKE_POSITION_INDEPENDENT_CODE", "ON");
+    cmake_config.define("CMAKE_CXX_STANDARD", "17");
+    if target_os == "windows" && target_env == "msvc" {
+        cmake_config.define(
+            "CMAKE_MSVC_RUNTIME_LIBRARY",
+            if profile.eq_ignore_ascii_case("debug") {
+                "MultiThreadedDebugDLL" // = /MDd
+            } else {
+                "MultiThreadedDLL" // = /MD
+            },
+        );
+    }
+
     cmake_config
-        .define("BUILD_SHARED_LIBS", if feature_static() { "OFF" } else { "ON" } )
+        .define(
+            "BUILD_SHARED_LIBS",
+            if feature_static() { "OFF" } else { "ON" },
+        )
         .define("MANIFOLD_TEST", "OFF")
         .define("MANIFOLD_CBIND", "ON")
         .define("MANIFOLD_CROSS_SECTION", "ON")
-        .define("MANIFOLD_PAR", if feature_parallel() { "ON" } else { "OFF" })
-        .define("MANIFOLD_EXPORT", if feature_export() { "ON" } else { "OFF" })
+        .define(
+            "MANIFOLD_PAR",
+            if feature_parallel() { "ON" } else { "OFF" },
+        )
+        .define(
+            "MANIFOLD_EXPORT",
+            if feature_export() { "ON" } else { "OFF" },
+        )
         .out_dir(out_dir.clone());
 
     if target_os == "windows" {
@@ -50,8 +79,14 @@ fn main() {
             println!("cargo:rustc-link-search=native={}", path.display());
         }
     }
-    println!("cargo:rustc-link-lib={}=manifold", if feature_static() { "static" } else { "dylib" });
-    println!("cargo:rustc-link-lib={}=manifoldc", if feature_static() { "static" } else { "dylib" });
+    println!(
+        "cargo:rustc-link-lib={}=manifold",
+        if feature_static() { "static" } else { "dylib" }
+    );
+    println!(
+        "cargo:rustc-link-lib={}=manifoldc",
+        if feature_static() { "static" } else { "dylib" }
+    );
 
     match (
         target_arch.as_str(),
