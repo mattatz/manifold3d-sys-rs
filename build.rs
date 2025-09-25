@@ -19,31 +19,18 @@ fn main() {
     let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
     let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
     let target_env = env::var("CARGO_CFG_TARGET_ENV").unwrap();
-    let profile = env::var("PROFILE").unwrap_or_else(|_| "release".to_string());
 
     let mut cmake_config = cmake::Config::new("vendor/manifold");
 
-    // Setup CMake configuration for MSVC
-    cmake_config.profile(if profile.eq_ignore_ascii_case("release") {
-        "Release"
-    } else {
-        "Debug"
-    });
-    cmake_config.define("CMAKE_POSITION_INDEPENDENT_CODE", "ON");
-    cmake_config.define("CMAKE_CXX_STANDARD", "17");
-    if target_os == "windows" && target_env == "msvc" {
-        cmake_config.define(
-            "CMAKE_MSVC_RUNTIME_LIBRARY",
-            if profile.eq_ignore_ascii_case("debug") {
-                "MultiThreadedDebugDLL" // = /MDd
-            } else {
-                "MultiThreadedDLL" // = /MD
-            },
-        );
+    #[cfg(all(target_os = "windows", target_env = "msvc"))]
+    {
+        cmake_config
+            .define("CMAKE_MSVC_RUNTIME_LIBRARY", "MultiThreadedDLL")
+            .cflag("/MD")
+            .cxxflag("/MD");
     }
 
     cmake_config
-        .define("MANIFOLD_USE_BUILTIN_CLIPPER2", "ON") // Use builtin version of clipper2
         .define(
             "BUILD_SHARED_LIBS",
             if feature_static() { "OFF" } else { "ON" },
@@ -84,6 +71,9 @@ fn main() {
     let link_kind = if feature_static() { "static" } else { "dylib" };
     println!("cargo:rustc-link-lib={}=manifold", link_kind);
     println!("cargo:rustc-link-lib={}=manifoldc", link_kind);
+
+    #[cfg(all(target_os = "windows", target_env = "msvc"))]
+    link_clipper2(&dst, link_kind);
 
     match (
         target_arch.as_str(),
@@ -134,4 +124,25 @@ fn generate_bindings(out_dir: &PathBuf) {
         .expect("Unable to generate bindings")
         .write_to_file(out_dir.join("bindings.rs"))
         .expect("Couldn't write bindings!");
+}
+
+/// Link Clipper2 library built by CMake for MSVC.
+#[allow(unused)]
+fn link_clipper2(build_dir: &PathBuf, link_kind: &str) {
+    let cfg_dir = if cfg!(debug_assertions) {
+        "Debug"
+    } else {
+        "Release"
+    };
+    let clipper_lib_dir = build_dir
+        .join("build")
+        .join("_deps")
+        .join("clipper2-build")
+        .join(cfg_dir);
+
+    println!(
+        "cargo:rustc-link-search=native={}",
+        clipper_lib_dir.display()
+    );
+    println!("cargo:rustc-link-lib={}=Clipper2", link_kind);
 }
